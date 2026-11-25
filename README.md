@@ -1,27 +1,31 @@
 # Super Bomberman 5 PLUS
 
-Repositório principal do projeto de expansão de Super Bomberman 5.
+Projeto de expansão não oficial para Super Bomberman 5.
 
-## Estrutura planejada
+## Organização
 
-- `game/`: código-fonte da base SuperBomberman5SNESRecomp enviada pelo criador.
+- `game/upstream/`: base original ligada como submódulo Git, fixada no commit `fea95b2c824819ca68ff32a3e4079af6aa4a99a0`.
 - `plus/`: código e documentação exclusivos do PLUS.
-- `third_party/`: dependências e componentes externos, cada um identificado com seu repositório e licença.
-- `assets_original/`: apenas recursos próprios ou devidamente licenciados; não armazenar ROMs.
+- `third_party/`: dependências externas isoladas.
+- `.github/workflows/android.yml`: compilação Android automática.
 
-## Recursos desejados
+O submódulo contém o código-fonte do projeto-base. O GitHub Actions usa `submodules: recursive` para obter também as dependências declaradas pela base.
 
-- Preservar campanha, modos e músicas originais.
+## Objetivos do PLUS
+
+- Preservar a campanha, os modos e as músicas originais.
 - Acrescentar a opção MULTIPLAYER ao menu.
-- NORMAL GAME: campanha cooperativa para dois jogadores.
-- BATTLE: partidas para até quatro jogadores.
-- Continuação da campanha com mundos, fases e chefes novos.
-- Android como plataforma-alvo.
+- NORMAL GAME cooperativo para dois jogadores.
+- BATTLE para até quatro jogadores.
+- Criar uma continuação da campanha com mundos, fases e chefes novos.
+- Gerar APK Android.
 
-## Estado atual
+## Estado real
 
-Este repositório ainda não contém a base completa do jogo. O ZIP enviado foi inspecionado localmente, mas sua importação integral para este repositório ainda não foi concluída. Os recursos listados acima são metas, não funcionalidades prontas.
+A base original e o fluxo de compilação Android estão conectados. O workflow foi adicionado e é acionado por push na branch `main` ou manualmente na aba Actions.
 
-Base de referência: https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp
+**As funcionalidades exclusivas do PLUS ainda não foram implementadas.** O APK gerado pelo workflow neste estágio é a base original, não a expansão completa. A campanha extra e a nova tela MULTIPLAYER exigem alterações adicionais no código e testes.
 
-Consulte as licenças e avisos de terceiros antes de redistribuir código ou recursos.
+Não inclua ROMs, saves ou conteúdo protegido no repositório. O app solicita a ROM do próprio usuário no primeiro uso. Consulte os avisos de licença da base e das dependências antes de redistribuir.
+
+Base: https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp
