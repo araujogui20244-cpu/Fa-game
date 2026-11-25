@@ -1,0 +1,3 @@
+[submodule "game/upstream"]
+	path = game/upstream
+	url = https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp.git

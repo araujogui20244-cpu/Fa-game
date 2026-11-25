@@ -4,4 +4,4 @@ A pasta `game/` é reservada ao código-fonte do projeto-base enviado em ZIP.
 
 Origem: https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp
 
-**Importação pendente:** o conteúdo completo do ZIP ainda não foi copiado para esta pasta. Não coloque ROMs neste repositório. Quando a base for importada, preserve os avisos de licença e os arquivos de submódulos/dependências do projeto original.
+A base completa fica vinculada como submódulo Git em `game/upstream`, fixado em um commit específico. As dependências próprias da base são inicializadas recursivamente pelo GitHub Actions. Não coloque ROMs neste repositório.
