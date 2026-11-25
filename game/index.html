@@ -31,7 +31,7 @@ button:active{transform:translateY(3px);box-shadow:0 2px 0 #10223e}
 <section id="title" class="screen"><h1>BOMB ARENA</h1><div class="sub">NOVA ERA · AVENTURA EXPLOSIVA</div><div class="menu">
 <button id="campaign">CAMPANHA</button><button id="battle">MODO BATALHA</button><button id="how">COMO JOGAR</button></div><div class="small">Um jogo independente inspirado nos clássicos de labirinto e bombas</div></section>
 <section id="game" class="screen"><div id="hud"><span id="modeLabel">CAMPANHA · FASE 1</span><span id="stats">BOMBAS 1 · ALCANCE 2</span></div><button id="pause">PAUSAR</button><canvas id="board" width="832" height="576"></canvas>
-<div id="controls"><div class="pad"><button data-dir="up">▲</button><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div><div class="actions"><button id="bombBtn">BOMBA</button></div><div class="pad"><button data-dir="p2up">▲</button><button data-dir="p2left">◀</button><button data-dir="p2down">▼</button><button data-dir="p2right">▶</button></div></div>
+<div id="controls"><div class="pad"><button data-dir="up">▲</button><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div><div class="actions"><button id="bombBtn">P1 BOMB</button><button id="bombBtn2">P2 BOMB</button></div><div class="pad"><button data-dir="p2up">▲</button><button data-dir="p2left">◀</button><button data-dir="p2down">▼</button><button data-dir="p2right">▶</button></div></div>
 <div id="message"><h2 id="msgTitle"></h2><div id="msgText"></div><button id="msgButton">CONTINUAR</button></div></section></div>
 <script>
 (()=>{
@@ -72,7 +72,7 @@ function loop(t){if(ended)return;let dt=Math.min((t-last)/1000,.05);last=t;if(!p
 const dirs={ArrowUp:[0,-1,0],ArrowDown:[0,1,0],ArrowLeft:[-1,0,0],ArrowRight:[1,0,0],w:[0,-1,1],s:[0,1,1],a:[-1,0,1],d:[1,0,1]};
 window.addEventListener('keydown',e=>{let d=dirs[e.key];if(d){e.preventDefault();move(players[d[2]],d[0],d[1])}if(e.key===' '||e.key==='Enter')placeBomb(players[0]);if(e.key==='Shift')placeBomb(players[1])});
 document.querySelectorAll('[data-dir]').forEach(btn=>{const d=btn.dataset.dir;const map={up:[0,-1,0],down:[0,1,0],left:[-1,0,0],right:[1,0,0],p2up:[0,-1,1],p2down:[0,1,1],p2left:[-1,0,1],p2right:[1,0,1]};const a=map[d];btn.addEventListener('pointerdown',e=>{e.preventDefault();move(players[a[2]],a[0],a[1])})});
-document.getElementById('bombBtn').addEventListener('pointerdown',e=>{e.preventDefault();placeBomb(players[0])});
+document.getElementById('bombBtn').addEventListener('pointerdown',e=>{e.preventDefault();placeBomb(players[0])});document.getElementById('bombBtn2').addEventListener('pointerdown',e=>{e.preventDefault();placeBomb(players[1])});
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'VOLTAR':'PAUSAR'};
 document.getElementById('campaign').onclick=()=>start('campaign');document.getElementById('battle').onclick=()=>start('battle');
 document.getElementById('how').onclick=()=>showHelp();
