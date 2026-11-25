@@ -1,4 +1,4 @@
-name: Android APK
+name: Build Android APK
 on:
   push:
     branches: [main]
@@ -6,41 +6,27 @@ on:
 permissions:
   contents: read
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PLUS and all source dependencies
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install Android SDK components
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "platforms;android-34" "build-tools;34.0.0"
-      - name: Fetch pinned SDL2 and generate app icons
-        working-directory: game/upstream
-        run: |
-          bash android/fetch_sdl.sh
-          python -m pip install pillow
-          python android/make_icons.py
-      - name: Build Android APK
-        working-directory: game/upstream/android
-        run: |
-          echo "cmake.dir=$(dirname "$(dirname "$(command -v cmake)")")" > local.properties
-          ./gradlew --no-daemon assembleRelease -Psb5Abis=arm64-v8a
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Prepare game assets
+        run: mkdir -p android/app/src/main/assets && cp game/index.html android/app/src/main/assets/index.html
+      - name: Build APK
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: super-bomberman-5-plus-android
-          path: game/upstream/android/app/build/outputs/apk/release/*.apk
+          name: bomb-arena-nova-era-debug
+          path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14

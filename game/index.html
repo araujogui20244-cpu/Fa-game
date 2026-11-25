@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#10182b"><title>Bomb Arena: Nova Era</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10182b;color:#fff;font-family:system-ui,Arial;touch-action:none}
+body{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 25%,#263e65,#10182b 70%)}
+#app{width:100vw;height:100dvh;display:flex;align-items:center;justify-content:center;position:relative}
+.screen{width:min(100vw,160vh);height:min(100dvh,62.5vw);min-height:280px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+h1{font-size:clamp(25px,5vw,64px);line-height:1;margin:0 0 8px;text-align:center;letter-spacing:2px;color:#ffe36b;text-shadow:0 4px 0 #9d4e25,0 8px 18px #000}
+.sub{color:#c7d8f4;font-size:clamp(11px,1.8vw,18px);margin-bottom:24px;text-align:center}
+.menu{display:flex;flex-direction:column;gap:10px;width:min(76%,330px)}
+button{border:2px solid #ffe36b;background:linear-gradient(#355b8e,#203b66);color:white;font-weight:900;letter-spacing:1px;border-radius:12px;padding:12px 18px;font-size:clamp(13px,2vw,19px);box-shadow:0 5px 0 #10223e;cursor:pointer}
+button:active{transform:translateY(3px);box-shadow:0 2px 0 #10223e}
+.small{font-size:12px;color:#aabbd7;margin-top:18px;text-align:center}
+#game{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center}
+#hud{height:42px;width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-weight:800;font-size:clamp(11px,1.6vw,16px)}
+#board{width:min(100%,calc((100dvh - 140px)*1.444));height:auto;max-height:calc(100% - 115px);aspect-ratio:13/9;image-rendering:pixelated;border:3px solid #b8d7ff;border-radius:8px;box-shadow:0 8px 24px #0009;background:#16243b}
+#controls{width:100%;height:70px;display:flex;justify-content:space-between;align-items:center;padding:0 4%;gap:12px}
+.pad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,32px);gap:3px}
+.pad button,.actions button{padding:0;font-size:17px;border-radius:8px;min-width:0}
+.pad button:nth-child(1){grid-column:2}.pad button:nth-child(2){grid-column:1;grid-row:2}.pad button:nth-child(3){grid-column:2;grid-row:2}.pad button:nth-child(4){grid-column:3;grid-row:2}
+.actions{display:flex;gap:8px}.actions button{width:54px;height:54px;border-radius:50%;background:linear-gradient(#d66b4d,#963c35);border-color:#ffcf77}
+#pause{position:absolute;top:42px;right:12px;padding:5px 10px;font-size:12px}
+#message{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#08111ddd;flex-direction:column;gap:12px;text-align:center;padding:20px}
+#message h2{color:#ffe36b;font-size:clamp(24px,5vw,48px);margin:0}
+@media(orientation:portrait){.screen{width:100vw;height:100dvh;min-height:0}#game{justify-content:flex-start;padding-top:8px}#board{width:min(96vw,calc((100dvh - 180px)*1.444));max-height:unset}#controls{height:90px;margin-top:8px}.sub{margin-bottom:14px}}
+</style></head>
+<body><div id="app">
+<section id="title" class="screen"><h1>BOMB ARENA</h1><div class="sub">NOVA ERA · AVENTURA EXPLOSIVA</div><div class="menu">
+<button id="campaign">CAMPANHA</button><button id="battle">MODO BATALHA</button><button id="how">COMO JOGAR</button></div><div class="small">Um jogo independente inspirado nos clássicos de labirinto e bombas</div></section>
+<section id="game" class="screen"><div id="hud"><span id="modeLabel">CAMPANHA · FASE 1</span><span id="stats">BOMBAS 1 · ALCANCE 2</span></div><button id="pause">PAUSAR</button><canvas id="board" width="832" height="576"></canvas>
+<div id="controls"><div class="pad"><button data-dir="up">▲</button><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div><div class="actions"><button id="bombBtn">BOMBA</button></div><div class="pad"><button data-dir="p2up">▲</button><button data-dir="p2left">◀</button><button data-dir="p2down">▼</button><button data-dir="p2right">▶</button></div></div>
+<div id="message"><h2 id="msgTitle"></h2><div id="msgText"></div><button id="msgButton">CONTINUAR</button></div></section></div>
+<script>
+(()=>{
+const canvas=document.getElementById('board'),ctx=canvas.getContext('2d'),title=document.getElementById('title'),game=document.getElementById('game');
+const W=13,H=9,T=64;let grid=[],players=[],bombs=[],flames=[],enemies=[],mode='campaign',stage=1,paused=false,ended=false,last=0,moveClock=0;
+const colors=['#45c6ff','#ff8d54'];
+function makeGrid(){grid=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>x===0||y===0||x===W-1||y===H-1||x%2===0&&y%2===0?1:0));
+for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(grid[y][x]===0&&!(x<3&&y<3)&&Math.random()<.43)grid[y][x]=2;
+[[1,1],[2,1],[1,2],[W-2,H-2],[W-3,H-2],[W-2,H-3]].forEach(([x,y])=>grid[y][x]=0)}
+function reset(){makeGrid();bombs=[];flames=[];ended=false;paused=false;
+players=[{x:1,y:1,alive:true,color:colors[0],max:1,range:2,cd:0},{x:W-2,y:H-2,alive:true,color:colors[1],max:1,range:2,cd:0}];
+enemies=mode==='campaign'?Array.from({length:2+stage},()=>{let x,y;do{x=1+Math.floor(Math.random()*(W-2));y=1+Math.floor(Math.random()*(H-2))}while(grid[y][x]||players.some(p=>p.x===x&&p.y===y));return{x,y,alive:true,cd:0}}):[];updateHud()}
+function updateHud(){document.getElementById('modeLabel').textContent=mode==='campaign'?'CAMPANHA · FASE '+stage:'BATALHA · 2 JOGADORES';document.getElementById('stats').textContent='BOMBAS '+(players[0]?.max||1)+' · ALCANCE '+(players[0]?.range||2)}
+function start(m){mode=m;stage=1;title.style.display='none';game.style.display='flex';document.getElementById('message').style.display='none';reset();last=performance.now();requestAnimationFrame(loop)}
+function tile(x,y){return grid[y]?.[x]??1}
+function occupied(x,y){return players.some(p=>p.alive&&p.x===x&&p.y===y)||enemies.some(e=>e.alive&&e.x===x&&e.y===y)||bombs.some(b=>b.x===x&&b.y===y)}
+function move(p,dx,dy){if(!p?.alive||p.cd>0||paused||ended)return;let x=p.x+dx,y=p.y+dy;if(tile(x,y)===0&&!bombs.some(b=>b.x===x&&b.y===y)&&!players.some(q=>q!==p&&q.alive&&q.x===x&&q.y===y)){p.x=x;p.y=y;p.cd=.12}}
+function placeBomb(p){if(!p?.alive||paused||ended||bombs.filter(b=>b.owner===p).length>=p.max||bombs.some(b=>b.x===p.x&&b.y===p.y))return;bombs.push({x:p.x,y:p.y,range:p.range,t:1.65,owner:p})}
+function explode(b){let cells=[[b.x,b.y]];for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])for(let n=1;n<=b.range;n++){let x=b.x+dx*n,y=b.y+dy*n;if(tile(x,y)===1)break;cells.push([x,y]);if(tile(x,y)===2){grid[y][x]=0;if(Math.random()<.3){/* bonus chance */}break}}
+flames.push({cells,t:.42});}
+function hitCheck(){for(const f of flames)for(const [x,y] of f.cells){for(const p of players)if(p.alive&&p.x===x&&p.y===y)p.alive=false;for(const e of enemies)if(e.alive&&e.x===x&&e.y===y)e.alive=false}}
+function showMessage(titleText,body,button,fn){ended=true;document.getElementById('msgTitle').textContent=titleText;document.getElementById('msgText').textContent=body;document.getElementById('msgButton').textContent=button;document.getElementById('message').style.display='flex';document.getElementById('msgButton').onclick=fn}
+function checkEnd(){if(mode==='campaign'){if(!players[0].alive){showMessage('FIM DE JOGO','Você foi atingido por uma explosão.','TENTAR DE NOVO',()=>{document.getElementById('message').style.display='none';reset();last=performance.now();requestAnimationFrame(loop)});return}
+if(enemies.every(e=>!e.alive)){showMessage('FASE CONCLUÍDA','Todos os inimigos foram derrotados!','PRÓXIMA FASE',()=>{stage++;document.getElementById('message').style.display='none';reset();last=performance.now();requestAnimationFrame(loop)});return}}
+else if(!players[0].alive||!players[1].alive){let winner=players[0].alive?'JOGADOR 1':'JOGADOR 2';showMessage(players[0].alive||players[1].alive?'VITÓRIA!':'EMPATE',players[0].alive||players[1].alive?winner+' venceu a batalha.':'Os dois jogadores foram eliminados.','JOGAR DE NOVO',()=>{document.getElementById('message').style.display='none';reset();last=performance.now();requestAnimationFrame(loop)});}}
+function update(dt){for(const p of players)p.cd=Math.max(0,p.cd-dt);for(const b of bombs){b.t-=dt;if(b.t<=0){explode(b);b.t=999}}
+for(let i=bombs.length-1;i>=0;i--)if(bombs[i].t===999)bombs.splice(i,1);
+for(const f of flames)f.t-=dt;flames=flames.filter(f=>f.t>0);hitCheck();
+for(const e of enemies)if(e.alive){e.cd-=dt;if(e.cd<=0){e.cd=.55+Math.random()*.3;let opts=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-.5);for(const [dx,dy]of opts){let x=e.x+dx,y=e.y+dy;if(tile(x,y)===0&&!occupied(x,y)){e.x=x;e.y=y;break}}}}
+checkEnd()}
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);for(let y=0;y<H;y++)for(let x=0;x<W;x++){let v=tile(x,y),px=x*T,py=y*T;ctx.fillStyle=(x+y)%2?'#315b62':'#294e59';ctx.fillRect(px,py,T,T);ctx.strokeStyle='#47757a';ctx.strokeRect(px,py,T,T);if(v===1){ctx.fillStyle='#53677d';ctx.fillRect(px+4,py+4,T-8,T-8);ctx.fillStyle='#8296aa';ctx.fillRect(px+8,py+8,T-16,8)}else if(v===2){ctx.fillStyle='#a85e3d';ctx.fillRect(px+5,py+5,T-10,T-10);ctx.fillStyle='#d88b53';ctx.fillRect(px+10,py+10,T-20,10)}}
+for(const b of bombs){ctx.fillStyle='#151923';ctx.beginPath();ctx.arc(b.x*T+32,b.y*T+35,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffdb62';ctx.fillRect(b.x*T+30,b.y*T+9,5,9)}
+for(const f of flames)for(const [x,y]of f.cells){ctx.fillStyle='#ffb52f';ctx.fillRect(x*T+3,y*T+3,T-6,T-6);ctx.fillStyle='#fff3a1';ctx.fillRect(x*T+17,y*T+17,T-34,T-34)}
+for(const e of enemies)if(e.alive){ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.arc(e.x*T+32,e.y*T+34,21,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(e.x*T+20,e.y*T+25,7,8);ctx.fillRect(e.x*T+37,e.y*T+25,7,8)}
+for(let i=0;i<players.length;i++){let p=players[i];if(!p.alive)continue;ctx.fillStyle=p.color;ctx.beginPath();ctx.roundRect(p.x*T+11,p.y*T+8,42,49,12);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(p.x*T+19,p.y*T+23,8,9);ctx.fillRect(p.x*T+37,p.y*T+23,8,9);ctx.fillStyle='#172033';ctx.fillRect(p.x*T+20,p.y*T+44,24,4)}
+}
+function loop(t){if(ended)return;let dt=Math.min((t-last)/1000,.05);last=t;if(!paused)update(dt);draw();requestAnimationFrame(loop)}
+const dirs={ArrowUp:[0,-1,0],ArrowDown:[0,1,0],ArrowLeft:[-1,0,0],ArrowRight:[1,0,0],w:[0,-1,1],s:[0,1,1],a:[-1,0,1],d:[1,0,1]};
+window.addEventListener('keydown',e=>{let d=dirs[e.key];if(d){e.preventDefault();move(players[d[2]],d[0],d[1])}if(e.key===' '||e.key==='Enter')placeBomb(players[0]);if(e.key==='Shift')placeBomb(players[1])});
+document.querySelectorAll('[data-dir]').forEach(btn=>{const d=btn.dataset.dir;const map={up:[0,-1,0],down:[0,1,0],left:[-1,0,0],right:[1,0,0],p2up:[0,-1,1],p2down:[0,1,1],p2left:[-1,0,1],p2right:[1,0,1]};const a=map[d];btn.addEventListener('pointerdown',e=>{e.preventDefault();move(players[a[2]],a[0],a[1])})});
+document.getElementById('bombBtn').addEventListener('pointerdown',e=>{e.preventDefault();placeBomb(players[0])});
+document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'VOLTAR':'PAUSAR'};
+document.getElementById('campaign').onclick=()=>start('campaign');document.getElementById('battle').onclick=()=>start('battle');
+document.getElementById('how').onclick=()=>showHelp();
+function showHelp(){document.getElementById('msgTitle').textContent='COMO JOGAR';document.getElementById('msgText').textContent='Use os controles para andar e o botão BOMBA para explodir blocos e derrotar inimigos. Jogador 2 usa WASD + SHIFT no teclado ou o direcional da direita. Evite suas próprias explosões!';document.getElementById('msgButton').textContent='VOLTAR';document.getElementById('message').style.display='flex';document.getElementById('msgButton').onclick=()=>{document.getElementById('message').style.display='none';if(game.style.display!=='flex')return}};
+})();
+</script></body></html>
